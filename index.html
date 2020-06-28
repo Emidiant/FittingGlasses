@@ -2,39 +2,38 @@
 <head>
     <title>threejs - models</title>
     <link href="style.css" rel="stylesheet">
-    <script type="text/javascript" src="https://unpkg.com/webcam-easy/dist/webcam-easy.min.js"></script>
+<!--    <script type="text/javascript" src="https://unpkg.com/webcam-easy/dist/webcam-easy.min.js"></script>-->
+<!--    <script defer src="face-api.min.js"></script>-->
+<!--    <script defer src="script.js"></script>-->
 </head>
 <body>
-
-    <video id="webcam" autoplay playsinline></video>
+    <script src="face-api.min.js"></script>
+<!--    <video id="webcam" autoplay playsinline></video>-->
+    <video id="video" width="720" height="560" autoplay muted></video>
     <canvas id="canvas" class="d-none"></canvas>
-    <audio id="snapSound" src="audio/snap.wav" preload = "auto"></audio>
 
-    <script>
-        const webcamElement = document.getElementById('webcam');
-        const canvasElement = document.getElementById('canvas');
-        const snapSoundElement = document.getElementById('snapSound');
-        const webcam = new Webcam(webcamElement, 'user', canvasElement, snapSoundElement);
-
-        webcam.start()
-            .then(result =>{
-                console.log("webcam started");
-            })
-            .catch(err => {
-                console.log(err);
-            });
-
-        // var picture = webcam.snap();
-
-        webcam.stop();
-    </script>
 
     <canvas id="myCanvas"></canvas>
-
     <script src="three.js"></script>
     <script src="GLTFLoader.js"></script>
 
     <script>
+        const video = document.getElementById('video')
+
+        Promise.all([
+            faceapi.nets.tinyFaceDetector.loadFromUri('models/tiny_face_detector_model-weights_manifest.json'),
+            faceapi.nets.faceLandmark68Net.loadFromUri('models/face_landmark_68_model-weights_manifest.json'),
+            faceapi.nets.faceRecognitionNet.loadFromUri('models/face_recognition_model-weights_manifest.json')
+        ]).then(startVideo)
+
+        function startVideo() {
+            navigator.getUserMedia(
+                { video: {} },
+                stream => video.srcObject = stream,
+                err => console.error(err)
+            )
+        }
+
         var renderer,
             scene,
             camera,
@@ -42,13 +41,13 @@
 
         //RENDERER
         renderer = new THREE.WebGLRenderer({
-          canvas: myCanvas,
-          antialias: true,
-          transparent: true
+            canvas: myCanvas,
+            antialias: true,
+            transparent: true
         });
         renderer.setClearColor(0x000000, 0);
         renderer.setPixelRatio(window.devicePixelRatio);
-        renderer.setSize(640, 480);
+        renderer.setSize(720, 560);
 
         //CAMERA
         camera = new THREE.PerspectiveCamera(50, window.innerWidth/window.innerHeight, 0.01, 5000);
@@ -59,7 +58,7 @@
 
         //SCENE
         scene = new THREE.Scene();
-        video = document.getElementById( 'webcam' );
+        // video = document.getElementById( 'video' );
 
 
         var vidTexture = new THREE.VideoTexture(video);
@@ -76,7 +75,7 @@
 
         var loader = new THREE.GLTFLoader();
 
-        loader.load('models/vuzix.glb', handle_load);
+        loader.load('glasses_models/vuzix.glb', handle_load);
 
         var mesh;
 
@@ -92,21 +91,54 @@
 
 
         //RENDER LOOP
-        render();
+
 
         var delta = 0;
         var prevTime = Date.now();
 
-        function render() {
-            delta += 0.1;
+        function render(x, y) {
             if (mesh) {
-                mesh.rotation.y += 0.01;
+                mesh.position.y = y-260;
+                mesh.position.x = x-300;  // необходимо разобраться с координатами
+                console.log("mesh roration" + x + " " + y)
             }
             renderer.render(scene, camera);
-            requestAnimationFrame(render);
+            // requestAnimationFrame(render);
         }
 
+        video.addEventListener('play', () => {
+            const canvas = faceapi.createCanvasFromMedia(video)
+            document.body.append(canvas)
+            const displaySize = { width: video.width, height: video.height }
+            faceapi.matchDimensions(canvas, displaySize)
+
+            setInterval(async () => {
+                const detections = await faceapi.detectAllFaces(video, new faceapi.TinyFaceDetectorOptions()).withFaceLandmarks()
+                // const detections = await faceapi.detectFaceLandmarks(video)
+                const resizedDetections = faceapi.resizeResults(detections, displaySize)
+                canvas.getContext('2d').clearRect(0, 0, canvas.width, canvas.height)
+                // faceapi.draw.drawDetections(canvas, resizedDetections)
+                faceapi.draw.drawFaceLandmarks(canvas, resizedDetections)
+
+
+                const landmarks = await faceapi.detectFaceLandmarks(video)
+                if (landmarks) {
+                    const leftEye = landmarks.getLeftEye()
+                    const rightEye = landmarks.getRightEye()
+                    const jawOutline = landmarks.getJawOutline()
+                    const landmarkPositions = landmarks.positions
+                    console.log("Left Eye landmarks ===========>" + Math.round(leftEye[0].x) + " " + Math.round(leftEye[0].y));
+                    // console.log("Right Eye landmarks ===========>" + JSON.stringify(rightEye));
+
+                    render(Math.round(leftEye[0].x), Math.round(leftEye[0].y));
+                }
+
+            }, 200)
+
+
+        })
     </script>
+
 
 
 </body>
