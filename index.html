@@ -2,13 +2,9 @@
 <head>
     <title>threejs - models</title>
     <link href="style.css" rel="stylesheet">
-<!--    <script type="text/javascript" src="https://unpkg.com/webcam-easy/dist/webcam-easy.min.js"></script>-->
-<!--    <script defer src="face-api.min.js"></script>-->
-<!--    <script defer src="script.js"></script>-->
 </head>
 <body>
     <script src="face-api.min.js"></script>
-<!--    <video id="webcam" autoplay playsinline></video>-->
     <video id="video" width="720" height="560" autoplay muted></video>
     <canvas id="canvas" class="d-none"></canvas>
 
@@ -91,8 +87,6 @@
 
 
         //RENDER LOOP
-
-
         var delta = 0;
         var prevTime = Date.now();
 
@@ -126,7 +120,6 @@
                     const leftEye = landmarks.getLeftEye()
                     const rightEye = landmarks.getRightEye()
                     const jawOutline = landmarks.getJawOutline()
-                    const landmarkPositions = landmarks.positions
                     console.log("Left Eye landmarks ===========>" + Math.round(leftEye[0].x) + " " + Math.round(leftEye[0].y));
                     // console.log("Right Eye landmarks ===========>" + JSON.stringify(rightEye));
 
