@@ -6,12 +6,13 @@
 <body>
     <script src="libs/face-api.min.js"></script>
     <video id="video" width="720" height="560" autoplay muted></video>
-    <canvas id="canvas" class="d-none"></canvas>
+    <canvas id="canvas" width="720" height="560" class="d-none"></canvas>
 
 
     <canvas id="myCanvas"></canvas>
     <script src="libs/three.js"></script>
     <script src="libs/GLTFLoader.js"></script>
+    <script src="keyboard.js"></script>
 
     <script>
         const video = document.getElementById('video')
@@ -58,7 +59,6 @@
 
 
         var vidTexture = new THREE.VideoTexture(video);
-
         scene.background = vidTexture;
 
 
@@ -91,13 +91,38 @@
         var prevTime = Date.now();
 
         function render(x, y) {
-            if (mesh) {
-                mesh.position.y = y-260;
-                mesh.position.x = x-300;  // необходимо разобраться с координатами
-                console.log("mesh roration" + x + " " + y)
-            }
+            // if (mesh) {
+            //     mesh.position.y = -(y/560 * 100 - 25);
+            //     mesh.position.x = x/720 * 50 - 50;  // необходимо разобраться с координатами
+            //     console.log("mesh position " + mesh.position.x + " " + mesh.position.y)
+            // }
             renderer.render(scene, camera);
             // requestAnimationFrame(render);
+        }
+
+
+
+        keyboard = new KeyboardState();
+
+        function animate() {
+            requestAnimationFrame( animate );
+            if ( keyboard.pressed("W") )
+                mesh.translateY( 0.1 );
+            if ( keyboard.pressed("S") )
+                mesh.translateY( - 0.1 );
+            if ( keyboard.pressed("A") ){
+                console.log("entered in A");
+                mesh.translateX( - 0.1 );
+            }
+            if ( keyboard.pressed("D") ){
+                console.log("entered in D");
+                mesh.translateX( 0.1 );
+            }
+            if ( keyboard.pressed("F") ){ // press F to view current position 3d model
+                console.log("mesh position " + mesh.position.x + " " + mesh.position.y)
+            }
+
+            renderer.render( scene, camera );
         }
 
         video.addEventListener('play', () => {
@@ -120,13 +145,14 @@
                     const leftEye = landmarks.getLeftEye()
                     const rightEye = landmarks.getRightEye()
                     const jawOutline = landmarks.getJawOutline()
-                    console.log("Left Eye landmarks ===========>" + Math.round(leftEye[0].x) + " " + Math.round(leftEye[0].y));
+                    // console.log("Left Eye landmarks ===========>" + Math.round(leftEye[0].x) + " " + Math.round(leftEye[0].y));
                     // console.log("Right Eye landmarks ===========>" + JSON.stringify(rightEye));
 
                     render(Math.round(leftEye[0].x), Math.round(leftEye[0].y));
+                    animate();
                 }
 
-            }, 200)
+            }, 300)
 
 
         })
