@@ -5,17 +5,17 @@
 </head>
 <body>
     <script src="libs/face-api.min.js"></script>
+
     <video id="video" width="720" height="560" autoplay muted></video>
     <canvas id="canvas" width="720" height="560" class="d-none"></canvas>
 
-
-    <canvas id="myCanvas"></canvas>
     <script src="libs/three.js"></script>
     <script src="libs/GLTFLoader.js"></script>
     <script src="keyboard.js"></script>
 
+
     <script>
-        const video = document.getElementById('video')
+        const video = document.getElementById('video');
 
         Promise.all([
             faceapi.nets.tinyFaceDetector.loadFromUri('models/tiny_face_detector_model-weights_manifest.json'),
@@ -34,7 +34,7 @@
         var renderer,
             scene,
             camera,
-            myCanvas = document.getElementById('myCanvas');
+            myCanvas = document.getElementById('canvas');
 
         //RENDERER
         renderer = new THREE.WebGLRenderer({
@@ -55,8 +55,6 @@
 
         //SCENE
         scene = new THREE.Scene();
-        // video = document.getElementById( 'video' );
-
 
         var vidTexture = new THREE.VideoTexture(video);
         scene.background = vidTexture;
@@ -82,7 +80,7 @@
             console.log(mesh.children[0]);
             mesh.children[0].material = new THREE.MeshLambertMaterial();
             scene.add( mesh );
-            mesh.position.z = -10;
+            // mesh.position.z = 0;
         }
 
 
@@ -91,11 +89,10 @@
         var prevTime = Date.now();
 
         function render(x, y) {
-            // if (mesh) {
-            //     mesh.position.y = -(y/560 * 50 - 25);
-            //     mesh.position.x = x/720 * 100 - 50;  // необходимо разобраться с координатами
-            //     console.log("mesh position " + mesh.position.x + " " + mesh.position.y)
-            // }
+            if (mesh) {
+                mesh.position.y = -(y/560 * 50 - 25);
+                mesh.position.x = x/720 * 100 - 50;  // необходимо разобраться с координатами
+            }
             renderer.render(scene, camera);
             // requestAnimationFrame(render);
         }
@@ -133,32 +130,60 @@
 
             setInterval(async () => {
                 const detections = await faceapi.detectAllFaces(video, new faceapi.TinyFaceDetectorOptions()).withFaceLandmarks()
-                // const detections = await faceapi.detectFaceLandmarks(video)
                 const resizedDetections = faceapi.resizeResults(detections, displaySize)
+
                 canvas.getContext('2d').clearRect(0, 0, canvas.width, canvas.height)
-                // faceapi.draw.drawDetections(canvas, resizedDetections)
                 faceapi.draw.drawFaceLandmarks(canvas, resizedDetections)
 
+                const text = ['x = 0','y = 0']
+                const anchor = { x: 0, y: 0 }
+                const drawOptions = {
+                    anchorPosition: 'TOP_LEFT',
+                    backgroundColor: 'rgba(0, 0, 0, 0.5)'
+                }
+                const drawBox = new faceapi.draw.DrawTextField(text, anchor, drawOptions)
+                drawBox.draw(canvas)
 
-                const landmarks = await faceapi.detectFaceLandmarks(video)
-                if (landmarks) {
-                    const leftEye = landmarks.getLeftEye()
-                    const rightEye = landmarks.getRightEye()
-                    const jawOutline = landmarks.getJawOutline()
+                const text2 = ['x = 720','y = 0']
+                const anchor2 = { x: 700, y: 0 }
+                const drawOptions2 = {
+                    anchorPosition: 'TOP_LEFT',
+                    backgroundColor: 'rgba(0, 0, 0, 0.5)'
+                }
+                const drawBox2 = new faceapi.draw.DrawTextField(text2, anchor2, drawOptions2)
+                drawBox2.draw(canvas)
+
+
+                if (resizedDetections) {
+                    // console.log(JSON.stringify(resizedDetections))
+                    // console.log(resizedDetections[0].landmarks._positions[36]._x)
+                    // const leftEye = resizedDetections.getLeftEye() //36, 42
+                    // const rightEye = resizedDetections.getRightEye() //42, 48
+                    // const leftBrow = resizedDetections.getLeftEyeBrow()
+                    // const righBrow = resizedDetections.getRightEyeBrow()
+                    // const jawOutline = detections.getJawOutline()
                     // console.log("Left Eye landmarks ===========>" + Math.round(leftEye[0].x) + " " + Math.round(leftEye[0].y));
                     // console.log("Right Eye landmarks ===========>" + JSON.stringify(rightEye));
+                    if (canvas.getContext) {
+                        let ctx = canvas.getContext('2d');
+                        for (let i = 0; i < 6; i++){
+                            let left_x = Math.round(resizedDetections[0].landmarks._positions[36+i]._x);
+                            let left_y = Math.round(resizedDetections[0].landmarks._positions[36+i]._y);
+                            ctx.fillRect(left_x, left_y, 5, 5);
+                            let right_x = Math.round(resizedDetections[0].landmarks._positions[42+i]._x);
+                            let right_y = Math.round(resizedDetections[0].landmarks._positions[42+i]._y);
+                            ctx.fillRect(right_x,right_y,5,5);
+                            // console.log(left_x, left_y)
+                        }
+                    }
 
-                    render(Math.round(leftEye[0].x), Math.round(leftEye[0].y));
-                    animate();
+                    render(Math.round(resizedDetections[0].landmarks._positions[36]._x),Math.round(resizedDetections[0].landmarks._positions[36]._y));
+                    // animate();
                 }
 
             }, 300)
-
-
         })
     </script>
-
-
 
 </body>
 </html>
