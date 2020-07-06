@@ -68,8 +68,9 @@
         scene.add(light2);
 
         var loader = new THREE.GLTFLoader();
-
-        loader.load('glasses_models/vuzix.glb', handle_load);
+        let my_models = [];
+        loader.load('glasses_models/glassesBranchesBent_width.glb', handle_load);
+        loader.load('glasses_models/vuzix2_axis_in_head.glb', handle_load);
 
         var mesh;
 
@@ -77,50 +78,105 @@
 
             console.log(gltf);
             mesh = gltf.scene;
-            console.log(mesh.children[0]);
-            mesh.children[0].material = new THREE.MeshLambertMaterial();
-            scene.add( mesh );
+            console.log(mesh.children[0].material);
+            mesh.children[0].material = new THREE.MeshLambertMaterial({
+                color: new THREE.Color().setHex(0xA4ACDD),
+                opacity: 0.4,
+                transparent: true
+            });
+            my_models.push(mesh);
+            // scene.add( mesh );
             // mesh.position.z = 0;
         }
+
+
+        keyboard = new KeyboardState();
 
 
         //RENDER LOOP
         var delta = 0;
         var prevTime = Date.now();
 
-        function render(x, y) {
+        function rotationX(leftEye, rightEye, jaw) {
+            const nod = leftEye._y - jaw[0]._y;
+            return nod * Math.PI / 450;
+        }
+
+        function rotationY(leftEye, rightEye, jaw) {
+            let headShake = (jaw[0]._x - leftEye._x) - (rightEye._x - jaw[1]._x);
+            return - headShake * Math.PI / 550;
+        }
+
+        function rotationZ(leftEye, rightEye) {
+            const length = Math.sqrt((rightEye._x - leftEye._x) ** 2 + (rightEye._y - leftEye._y) ** 2);
+            return - Math.asin((rightEye._y - leftEye._y) / length);
+        }
+
+        function scale(leftEye, rightEye) {
+            const length = Math.sqrt((rightEye._x - leftEye._x) ** 2 + (rightEye._y - leftEye._y) ** 2);
+            return (length-160) / 2;
+        }
+
+        function render(leftEye, rightEye, jaw) {
+            if (!mesh){
+                mesh = my_models[0];
+                scene.add(my_models[0]);
+            }
+            //todo изменить переключение по клавише на переключение по кнопке со страницы
+            if ( keyboard.pressed("W") ){
+                while(scene.children.length > 0){
+                    scene.remove(scene.children[0]);
+                }
+                console.log("glassesBranchesBent");
+                scene.add(my_models[0]);
+                mesh = my_models[0];
+            }
+            if ( keyboard.pressed("S") ) {
+                while(scene.children.length > 0){
+                    scene.remove(scene.children[0]);
+                }
+                console.log("vuzix2");
+                scene.add(my_models[1]);
+                mesh = my_models[1];
+            }
             if (mesh) {
-                mesh.position.y = -(y/560 * 50 - 25);
-                mesh.position.x = x/720 * 100 - 50;  // необходимо разобраться с координатами
+                const x = (leftEye._x + rightEye._x) / 2;
+                const y = (leftEye._y + rightEye._y) / 2;
+                mesh.position.y = - y / 560 * 100 + 72;
+                mesh.position.x = x / 720 * 100 - 50;  // необходимо разобраться с координатами
+                mesh.rotation.x = rotationX(leftEye, rightEye, jaw);
+                mesh.rotation.y = rotationY(leftEye, rightEye, jaw);
+                mesh.rotation.z = rotationZ(leftEye, rightEye);
+                mesh.position.z = scale(leftEye, rightEye);
             }
             renderer.render(scene, camera);
+
             // requestAnimationFrame(render);
         }
 
 
 
-        keyboard = new KeyboardState();
 
-        function animate() {
-            requestAnimationFrame( animate );
-            if ( keyboard.pressed("W") )
-                mesh.translateY( 0.1 );
-            if ( keyboard.pressed("S") )
-                mesh.translateY( - 0.1 );
-            if ( keyboard.pressed("A") ){
-                console.log("entered in A");
-                mesh.translateX( - 0.1 );
-            }
-            if ( keyboard.pressed("D") ){
-                console.log("entered in D");
-                mesh.translateX( 0.1 );
-            }
-            if ( keyboard.pressed("F") ){ // press F to view current position 3d model
-                console.log("mesh position " + mesh.position.x + " " + mesh.position.y)
-            }
-
-            renderer.render( scene, camera );
-        }
+        // function animate() {
+        //     requestAnimationFrame( animate );
+        //     if ( keyboard.pressed("W") )
+        //         mesh.translateY( 0.1 );
+        //     if ( keyboard.pressed("S") )
+        //         mesh.translateY( - 0.1 );
+        //     if ( keyboard.pressed("A") ){
+        //         console.log("entered in A");
+        //         mesh.translateX( - 0.1 );
+        //     }
+        //     if ( keyboard.pressed("D") ){
+        //         console.log("entered in D");
+        //         mesh.translateX( 0.1 );
+        //     }
+        //     if ( keyboard.pressed("F") ){ // press F to view current position 3d model
+        //         console.log("mesh position " + mesh.position.x + " " + mesh.position.y)
+        //     }
+        //
+        //     renderer.render( scene, camera );
+        // }
 
         video.addEventListener('play', () => {
             const canvas = faceapi.createCanvasFromMedia(video)
@@ -133,28 +189,10 @@
                 const resizedDetections = faceapi.resizeResults(detections, displaySize)
 
                 canvas.getContext('2d').clearRect(0, 0, canvas.width, canvas.height)
-                faceapi.draw.drawFaceLandmarks(canvas, resizedDetections)
-
-                const text = ['x = 0','y = 0']
-                const anchor = { x: 0, y: 0 }
-                const drawOptions = {
-                    anchorPosition: 'TOP_LEFT',
-                    backgroundColor: 'rgba(0, 0, 0, 0.5)'
-                }
-                const drawBox = new faceapi.draw.DrawTextField(text, anchor, drawOptions)
-                drawBox.draw(canvas)
-
-                const text2 = ['x = 720','y = 0']
-                const anchor2 = { x: 700, y: 0 }
-                const drawOptions2 = {
-                    anchorPosition: 'TOP_LEFT',
-                    backgroundColor: 'rgba(0, 0, 0, 0.5)'
-                }
-                const drawBox2 = new faceapi.draw.DrawTextField(text2, anchor2, drawOptions2)
-                drawBox2.draw(canvas)
+                // faceapi.draw.drawFaceLandmarks(canvas, resizedDetections)
 
 
-                if (resizedDetections) {
+                if (resizedDetections[0]) {
                     // console.log(JSON.stringify(resizedDetections))
                     // console.log(resizedDetections[0].landmarks._positions[36]._x)
                     // const leftEye = resizedDetections.getLeftEye() //36, 42
@@ -164,20 +202,77 @@
                     // const jawOutline = detections.getJawOutline()
                     // console.log("Left Eye landmarks ===========>" + Math.round(leftEye[0].x) + " " + Math.round(leftEye[0].y));
                     // console.log("Right Eye landmarks ===========>" + JSON.stringify(rightEye));
+
+                    // if (canvas.getContext) {
+                    //     let ctx = canvas.getContext('2d');
+                    //
+                    //     // console.log(JSON.stringify(singleFace))
+                    //
+                    //     for (let i = 0; i < 6; i++){
+                    //         try {
+                    //             let landmarks = singleFace.landmarks;
+                    //             let left_x = Math.round(landmarks._positions[36+i]._x);
+                    //             let left_y = Math.round(landmarks._positions[36+i]._y);
+                    //             ctx.fillRect(left_x, left_y, 5, 5);
+                    //             let right_x = Math.round(landmarks._positions[42+i]._x);
+                    //             let right_y = Math.round(landmarks._positions[42+i]._y);
+                    //             ctx.fillRect(right_x,right_y, 5, 5);
+                    //         } catch(e) {
+                    //             // console.log(e)
+                    //         }
+                    //
+                    //
+                    //
+                    //         // console.log(left_x, left_y)
+                    //     }
+                    // }
+
                     if (canvas.getContext) {
                         let ctx = canvas.getContext('2d');
-                        for (let i = 0; i < 6; i++){
-                            let left_x = Math.round(resizedDetections[0].landmarks._positions[36+i]._x);
-                            let left_y = Math.round(resizedDetections[0].landmarks._positions[36+i]._y);
-                            ctx.fillRect(left_x, left_y, 5, 5);
-                            let right_x = Math.round(resizedDetections[0].landmarks._positions[42+i]._x);
-                            let right_y = Math.round(resizedDetections[0].landmarks._positions[42+i]._y);
-                            ctx.fillRect(right_x,right_y,5,5);
-                            // console.log(left_x, left_y)
-                        }
+                        // for (let i = 0; i < 6; i++){
+                        //     console.log(resizedDetections);
+                        //     let left_x = Math.round(resizedDetections[0].landmarks._positions[36+i]._x);
+                        //     let left_y = Math.round(resizedDetections[0].landmarks._positions[36+i]._y);
+                        //     ctx.fillRect(left_x, left_y, 5, 5);
+                        //     let right_x = Math.round(resizedDetections[0].landmarks._positions[42+i]._x);
+                        //     let right_y = Math.round(resizedDetections[0].landmarks._positions[42+i]._y);
+                        //     ctx.fillRect(right_x,right_y,5,5);
+                        //     // console.log(left_x, left_y)
+                        // }
+                        // ctx.fillRect(left_eye._x, left_eye._y, 5, 5);
+                        // ctx.fillRect(right_eye._x, right_eye._y, 5, 5);
+                        const leftEye = faceapi.getCenterPoint(resizedDetections[0].landmarks.getLeftEye());
+                        const rightEye = faceapi.getCenterPoint(resizedDetections[0].landmarks.getRightEye());
+                        const jaw =[resizedDetections[0].landmarks.getJawOutline()[0], resizedDetections[0].landmarks.getJawOutline()[16]];
+                        render(leftEye, rightEye, jaw);
                     }
 
-                    render(Math.round(resizedDetections[0].landmarks._positions[36]._x),Math.round(resizedDetections[0].landmarks._positions[36]._y));
+
+                    const text = ['x = 0','y = 0']
+                    const anchor = { x: 0, y: 0 }
+                    const drawOptions = {
+                        anchorPosition: 'TOP_LEFT',
+                        backgroundColor: 'rgba(0, 0, 0, 0.5)'
+                    }
+                    const drawBox = new faceapi.draw.DrawTextField(text, anchor, drawOptions)
+                    drawBox.draw(canvas)
+
+                    const text2 = ['x = 720','y = 0']
+                    const anchor2 = { x: 700, y: 0 }
+                    const drawOptions2 = {
+                        anchorPosition: 'TOP_LEFT',
+                        backgroundColor: 'rgba(0, 0, 0, 0.5)'
+                    }
+                    const drawBox2 = new faceapi.draw.DrawTextField(text2, anchor2, drawOptions2)
+                    drawBox2.draw(canvas)
+
+                    const leftEye = faceapi.getCenterPoint(resizedDetections[0].landmarks.getLeftEye());
+                    const rightEye = faceapi.getCenterPoint(resizedDetections[0].landmarks.getRightEye());
+                    const jaw =[resizedDetections[0].landmarks.getJawOutline()[0], resizedDetections[0].landmarks.getJawOutline()[16]];
+
+                    render(leftEye, rightEye, jaw);
+
+
                     // animate();
                 }
 
