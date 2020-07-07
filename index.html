@@ -68,30 +68,35 @@
         scene.add(light2);
 
         var loader = new THREE.GLTFLoader();
-        let my_models = [];
 
-        loader.load('glasses_models/vuzix2_width.glb', handle_load);
-        loader.load('glasses_models/vuzix2_left.glb', handle_load);
-        loader.load('glasses_models/vuzix2_right.glb', handle_load);
+        // var model = 'vuzix2';
+        var model = 'glassesBranchesBent';
 
-        // loader.load('glasses_models/glassesBranchesBent_width.glb', handle_load);
-        // loader.load('glasses_models/glassesBranchesBent_left.glb', handle_load);
-        // loader.load('glasses_models/glassesBranchesBent_right.glb', handle_load);
+        // loader.load('glasses_models/vuzix2_width.glb', handle_load);
+        // loader.load('glasses_models/vuzix2_left.glb', handle_load);
+        // loader.load('glasses_models/vuzix2_right.glb', handle_load);
+
+        loader.load('glasses_models/'+model+'_width.glb', width_load);
+        console.log('width')
+        loader.load('glasses_models/'+model+'_left.glb', left_load);
+        console.log('left')
+        loader.load('glasses_models/'+model+'_right.glb', right_load);
+        console.log('right')
 
 
+        // let my_models = [];
 
-        var mesh;
 
-        function handle_load(gltf) {
-            console.log(gltf);
+        var mesh_width;
+        var mesh_left;
+        var mesh_right;
+
+        function width_load(gltf) {
             mesh = gltf.scene;
             var lenses_number;
-            var glasses_number;
             for (let i = 0; i < 2; i++) {
                 if (mesh.children[i].name == "lenses") {
                     lenses_number = i;
-                } else {
-                    glasses_number = i;
                 }
             }
             mesh.children[lenses_number].material = new THREE.MeshLambertMaterial({
@@ -99,11 +104,40 @@
                 opacity: 0.4,
                 transparent: true
             });
-            // mesh.children[glasses_number].material = new THREE.MeshLambertMaterial({
-            //     color: new THREE.Color().setHex(0xA4ACDD),
-            //     transparent: true
-            // });
-            my_models.push(mesh);
+            mesh_width = mesh;
+            // my_models.push(mesh);
+        }
+        function left_load(gltf) {
+            mesh = gltf.scene;
+            var lenses_number;
+            for (let i = 0; i < 2; i++) {
+                if (mesh.children[i].name == "lenses") {
+                    lenses_number = i;
+                }
+            }
+            mesh.children[lenses_number].material = new THREE.MeshLambertMaterial({
+                color: new THREE.Color().setHex(0xA4ACDD),
+                opacity: 0.4,
+                transparent: true
+            });
+            // my_models.push(mesh);
+            mesh_left = mesh;
+        }
+        function right_load(gltf) {
+            mesh = gltf.scene;
+            var lenses_number;
+            for (let i = 0; i < 2; i++) {
+                if (mesh.children[i].name == "lenses") {
+                    lenses_number = i;
+                }
+            }
+            mesh.children[lenses_number].material = new THREE.MeshLambertMaterial({
+                color: new THREE.Color().setHex(0xA4ACDD),
+                opacity: 0.4,
+                transparent: true
+            });
+            mesh_right = mesh;
+            // my_models.push(mesh);
         }
 
 
@@ -145,20 +179,20 @@
                 while(scene.children.length > 0){
                     scene.remove(scene.children[0]);
                 }
-                mesh = my_models[0];
+                mesh = mesh_width;
                 scene.add(mesh);
             } else {
                 if (rotationY(leftEye, rightEye, jaw) > 0.06){
                     while(scene.children.length > 0){
                         scene.remove(scene.children[0]);
                     }
-                    mesh = my_models[1];
+                    mesh = mesh_left;
                     scene.add(mesh);
                 } else {
                     while(scene.children.length > 0){
                         scene.remove(scene.children[0]);
                     }
-                    mesh = my_models[2];
+                    mesh = mesh_right;
                     scene.add(mesh);
 
                 }
@@ -261,9 +295,6 @@
                     const jaw =[resizedDetections[0].landmarks.getJawOutline()[0], resizedDetections[0].landmarks.getJawOutline()[16]];
 
                     render(leftEye, rightEye, jaw);
-
-
-                    // animate();
                 }
 
             }, 300)
