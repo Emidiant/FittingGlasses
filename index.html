@@ -7,7 +7,7 @@
     <script src="libs/face-api.min.js"></script>
 
     <video id="video" width="720" height="560" autoplay muted></video>
-    <canvas id="canvas" width="720" height="560" class="d-none"></canvas>
+    <canvas id="canvas" width="720" height="560"></canvas>
 
     <script src="libs/three.js"></script>
     <script src="libs/GLTFLoader.js"></script>
@@ -74,7 +74,10 @@
         loader.load('glasses_models/vuzix2_left.glb', handle_load);
         loader.load('glasses_models/vuzix2_right.glb', handle_load);
 
-        loader.load('glasses_models/glassesBranchesBent_width.glb', handle_load);
+        // loader.load('glasses_models/glassesBranchesBent_width.glb', handle_load);
+        // loader.load('glasses_models/glassesBranchesBent_left.glb', handle_load);
+        // loader.load('glasses_models/glassesBranchesBent_right.glb', handle_load);
+
 
 
         var mesh;
@@ -136,42 +139,28 @@
                 mesh = my_models[0];
                 scene.add(my_models[0]);
             }
-            //todo изменить переключение по клавише на переключение по кнопке со страницы
-            if ( keyboard.pressed("W") ){
-                while(scene.children.length > 0){
-                    scene.remove(scene.children[3]);
-                }
-                console.log("glassesBranchesBent");
-                scene.add(my_models[3]);
-                mesh = my_models[3];
-            }
-            if ( keyboard.pressed("S") ) {
-                while(scene.children.length > 0){
-                    scene.remove(scene.children[0]);
-                }
-                scene.add(my_models[0]);
-                mesh = my_models[0];
-            }
+
 
             if (Math.abs(rotationY(leftEye, rightEye, jaw) - 0.06) < 0.05) {
                 while(scene.children.length > 0){
                     scene.remove(scene.children[0]);
                 }
-                scene.add(my_models[3]);
-                mesh = my_models[3];
+                mesh = my_models[0];
+                scene.add(mesh);
             } else {
                 if (rotationY(leftEye, rightEye, jaw) > 0.06){
                     while(scene.children.length > 0){
                         scene.remove(scene.children[0]);
                     }
-                    scene.add(my_models[1]);
                     mesh = my_models[1];
+                    scene.add(mesh);
                 } else {
                     while(scene.children.length > 0){
                         scene.remove(scene.children[0]);
                     }
-                    scene.add(my_models[2]);
                     mesh = my_models[2];
+                    scene.add(mesh);
+
                 }
             }
 
@@ -179,7 +168,7 @@
                 const x = (leftEye._x + rightEye._x) / 2;
                 const y = (leftEye._y + rightEye._y) / 2;
                 mesh.position.y = - y / 560 * 100 + 72;
-                mesh.position.x = x / 720 * 100 - 50;  // необходимо разобраться с координатами
+                mesh.position.x = x / 720 * 100 - 50;
                 mesh.rotation.x = rotationX(leftEye, rightEye, jaw);
                 mesh.rotation.y = rotationY(leftEye, rightEye, jaw);
                 mesh.rotation.z = rotationZ(leftEye, rightEye);
@@ -191,28 +180,6 @@
         }
 
 
-
-
-        // function animate() {
-        //     requestAnimationFrame( animate );
-        //     if ( keyboard.pressed("W") )
-        //         mesh.translateY( 0.1 );
-        //     if ( keyboard.pressed("S") )
-        //         mesh.translateY( - 0.1 );
-        //     if ( keyboard.pressed("A") ){
-        //         console.log("entered in A");
-        //         mesh.translateX( - 0.1 );
-        //     }
-        //     if ( keyboard.pressed("D") ){
-        //         console.log("entered in D");
-        //         mesh.translateX( 0.1 );
-        //     }
-        //     if ( keyboard.pressed("F") ){ // press F to view current position 3d model
-        //         console.log("mesh position " + mesh.position.x + " " + mesh.position.y)
-        //     }
-        //
-        //     renderer.render( scene, camera );
-        // }
 
         video.addEventListener('play', () => {
             const canvas = faceapi.createCanvasFromMedia(video)
@@ -264,19 +231,6 @@
                     // }
 
                     if (canvas.getContext) {
-                        let ctx = canvas.getContext('2d');
-                        // for (let i = 0; i < 6; i++){
-                        //     console.log(resizedDetections);
-                        //     let left_x = Math.round(resizedDetections[0].landmarks._positions[36+i]._x);
-                        //     let left_y = Math.round(resizedDetections[0].landmarks._positions[36+i]._y);
-                        //     ctx.fillRect(left_x, left_y, 5, 5);
-                        //     let right_x = Math.round(resizedDetections[0].landmarks._positions[42+i]._x);
-                        //     let right_y = Math.round(resizedDetections[0].landmarks._positions[42+i]._y);
-                        //     ctx.fillRect(right_x,right_y,5,5);
-                        //     // console.log(left_x, left_y)
-                        // }
-                        // ctx.fillRect(left_eye._x, left_eye._y, 5, 5);
-                        // ctx.fillRect(right_eye._x, right_eye._y, 5, 5);
                         const leftEye = faceapi.getCenterPoint(resizedDetections[0].landmarks.getLeftEye());
                         const rightEye = faceapi.getCenterPoint(resizedDetections[0].landmarks.getRightEye());
                         const jaw =[resizedDetections[0].landmarks.getJawOutline()[0], resizedDetections[0].landmarks.getJawOutline()[16]];
