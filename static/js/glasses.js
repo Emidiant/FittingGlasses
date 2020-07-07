@@ -1,6 +1,5 @@
-// const modelName = document.getElementById("modelName").textContent;
-var model = 'vuzix2';
-// var model = 'glassesBranchesBent';
+const modelName = document.getElementById("modelName").textContent;
+
 
 const video = document.getElementById('video');
 
@@ -58,13 +57,13 @@ var mesh_width;
 var mesh_left;
 var mesh_right;
 
-loader.load('../static/glasses_models/' + model + '_width.glb', function ( gltf ) {
+loader.load(`../static/glasses_models/${modelName}_width.glb`, function (gltf) {
     mesh_width = material(gltf);
 });
-loader.load('../static/glasses_models/' + model + '_left.glb', function ( gltf ) {
+loader.load(`../static/glasses_models/${modelName}_left.glb`, function (gltf) {
     mesh_left = material(gltf);
 });
-loader.load('../static/glasses_models/' + model + '_right.glb', function ( gltf ) {
+loader.load(`../static/glasses_models/${modelName}_right.glb`, function (gltf) {
     mesh_right = material(gltf);
 });
 
