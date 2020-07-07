@@ -69,10 +69,12 @@
 
         var loader = new THREE.GLTFLoader();
         let my_models = [];
-        loader.load('glasses_models/glassesBranchesBent_width.glb', handle_load);
-        loader.load('glasses_models/vuzix2_axis_in_head.glb', handle_load);
+
+        loader.load('glasses_models/vuzix2_width.glb', handle_load);
         loader.load('glasses_models/vuzix2_left.glb', handle_load);
         loader.load('glasses_models/vuzix2_right.glb', handle_load);
+
+        loader.load('glasses_models/glassesBranchesBent_width.glb', handle_load);
 
 
         var mesh;
@@ -81,9 +83,12 @@
             console.log(gltf);
             mesh = gltf.scene;
             var lenses_number;
+            var glasses_number;
             for (let i = 0; i < 2; i++) {
                 if (mesh.children[i].name == "lenses") {
                     lenses_number = i;
+                } else {
+                    glasses_number = i;
                 }
             }
             mesh.children[lenses_number].material = new THREE.MeshLambertMaterial({
@@ -91,9 +96,11 @@
                 opacity: 0.4,
                 transparent: true
             });
+            // mesh.children[glasses_number].material = new THREE.MeshLambertMaterial({
+            //     color: new THREE.Color().setHex(0xA4ACDD),
+            //     transparent: true
+            // });
             my_models.push(mesh);
-            // scene.add( mesh );
-            // mesh.position.z = 0;
         }
 
 
@@ -132,38 +139,42 @@
             //todo изменить переключение по клавише на переключение по кнопке со страницы
             if ( keyboard.pressed("W") ){
                 while(scene.children.length > 0){
-                    scene.remove(scene.children[0]);
+                    scene.remove(scene.children[3]);
                 }
                 console.log("glassesBranchesBent");
-                scene.add(my_models[0]);
-                mesh = my_models[0];
+                scene.add(my_models[3]);
+                mesh = my_models[3];
             }
             if ( keyboard.pressed("S") ) {
                 while(scene.children.length > 0){
                     scene.remove(scene.children[0]);
                 }
-                console.log("vuzix2");
+                scene.add(my_models[0]);
+                mesh = my_models[0];
+            }
+
+            if (Math.abs(rotationY(leftEye, rightEye, jaw) - 0.06) < 0.05) {
+                while(scene.children.length > 0){
+                    scene.remove(scene.children[0]);
+                }
                 scene.add(my_models[3]);
                 mesh = my_models[3];
-
-            }
-            if ( keyboard.pressed("A") ) {
-                while(scene.children.length > 0){
-                    scene.remove(scene.children[0]);
+            } else {
+                if (rotationY(leftEye, rightEye, jaw) > 0.06){
+                    while(scene.children.length > 0){
+                        scene.remove(scene.children[0]);
+                    }
+                    scene.add(my_models[1]);
+                    mesh = my_models[1];
+                } else {
+                    while(scene.children.length > 0){
+                        scene.remove(scene.children[0]);
+                    }
+                    scene.add(my_models[2]);
+                    mesh = my_models[2];
                 }
-                console.log("vuzix2_left");
-                scene.add(my_models[2]);
-                mesh = my_models[2];
             }
-            if ( keyboard.pressed("D") ) {
-                while(scene.children.length > 0){
-                    scene.remove(scene.children[0]);
-                }
-                console.log("vuzix2_right");
-                scene.add(my_models[1]);
-                mesh = my_models[1];
 
-            }
             if (mesh) {
                 const x = (leftEye._x + rightEye._x) / 2;
                 const y = (leftEye._y + rightEye._y) / 2;
